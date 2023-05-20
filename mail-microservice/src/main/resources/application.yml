@@ -7,5 +7,5 @@ spring:
         smtp:
           starttls:
             enable: true
-    username: gcaio7463@gmail.com
-    password: myqbjolchtkeyqqz
+    username: "*********@gmail.com"
+    password: "****************"

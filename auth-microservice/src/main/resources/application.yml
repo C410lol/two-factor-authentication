@@ -3,9 +3,9 @@ server:
 
 spring:
   datasource:
-    password: banco007
+    password: "********"
     url: jdbc:postgresql://localhost:5432/auth-ms-db
-    username: postgres
+    username: "********"
   jpa:
     hibernate:
       ddl-auto: update
