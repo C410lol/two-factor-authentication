@@ -40,7 +40,7 @@ public class JwtService {
         return null;
     }
 
-    private String getSubject(String token) {
+    public String getSubject(String token) {
         return getClaim(token, Claims::getSubject);
     }
 

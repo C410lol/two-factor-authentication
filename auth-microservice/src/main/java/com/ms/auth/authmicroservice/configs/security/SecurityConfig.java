@@ -22,7 +22,8 @@ public class SecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests().requestMatchers(
                         "/users/create",
-                        "/users/login").permitAll().anyRequest().authenticated()
+                        "/users/login",
+                        "/users/verify/{uuid}").permitAll().anyRequest().authenticated()
                 .and()
                 .addFilterBefore(authFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

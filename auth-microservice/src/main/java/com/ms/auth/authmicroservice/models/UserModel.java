@@ -31,7 +31,7 @@ public class UserModel {
     private String password;
 
     @Column(nullable = false)
-    private Integer verificationCode;
+    private String verificationCode;
 
     @Column(nullable = false)
     private Boolean verified;

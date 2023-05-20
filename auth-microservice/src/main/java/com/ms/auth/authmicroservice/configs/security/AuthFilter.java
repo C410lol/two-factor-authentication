@@ -1,6 +1,7 @@
 package com.ms.auth.authmicroservice.configs.security;
 
 import com.ms.auth.authmicroservice.services.JwtService;
+import com.ms.auth.authmicroservice.services.UserService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,6 +18,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthFilter extends OncePerRequestFilter {
 
+    private final UserService userService;
     private final JwtService jwtService;
 
     @Override protected void doFilterInternal(@NotNull HttpServletRequest request,
@@ -26,8 +28,12 @@ public class AuthFilter extends OncePerRequestFilter {
         if(authorizationHeader != null &&
                 !authorizationHeader.isBlank() &&
                 authorizationHeader.startsWith("Bearer ")) {
-            SecurityContextHolder.getContext().setAuthentication(
-                    jwtService.tryToAuthenticate(authorizationHeader.substring(7)));
+            var authentication = jwtService.tryToAuthenticate(authorizationHeader.substring(7));
+            if(authentication != null) {
+                if(userService.isUserVerified((String) authentication.getPrincipal())) {
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            }
         }
         filterChain.doFilter(request, response);
     }

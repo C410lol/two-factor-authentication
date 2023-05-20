@@ -10,6 +10,7 @@ import com.ms.auth.authmicroservice.services.MailService;
 import com.ms.auth.authmicroservice.services.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Random;
 import java.util.UUID;
 
+@Log4j2
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
@@ -32,12 +34,13 @@ public class UserController {
         var userModel = new UserModel();
         BeanUtils.copyProperties(userDto, userModel);
         var verificationCode = new Random().nextInt(100000);
-        userModel.setVerificationCode(verificationCode);
+        userModel.setVerificationCode(String.valueOf(verificationCode));
         userModel.setVerified(false);
         mailService.sendMailVerificationMessage(new VerificationMailDto(
                 userDto.getEmail(),
                 verificationCode
         ));
+        log.info(verificationCode);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(userModel));
     }
 
@@ -83,12 +86,13 @@ public class UserController {
 
     @PostMapping("/verify/{uuid}")
     public ResponseEntity<Object> verify(@PathVariable(value = "uuid") UUID uuid,
-                                         @RequestParam(value = "verificationCode") Integer verificationCode) {
+                                         @RequestParam(value = "verificationCode") String verificationCode) {
         var optionalUserModel = userService.findById(uuid);
         if(optionalUserModel.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found :(");
         }
-        if(!optionalUserModel.get().getVerificationCode().equals(verificationCode)) {
+        if(!userService.isSameVerificationCode(verificationCode,
+                optionalUserModel.get().getVerificationCode())) {
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
                     "Error verifying code, it might be wrong :/");
         }

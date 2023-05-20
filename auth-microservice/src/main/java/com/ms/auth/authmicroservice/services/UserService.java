@@ -21,6 +21,7 @@ public class UserService {
 
     public UserModel save(@NotNull UserModel userModel) {
         userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
+        userModel.setVerificationCode(passwordEncoder.encode(userModel.getVerificationCode()));
         return userRepository.save(userModel);
     }
 
@@ -30,13 +31,8 @@ public class UserService {
 
     public boolean authenticate(@NotNull AuthDto authDto) {
         var optionalUserModel = userRepository.findByUsername(authDto.getUsername());
-        if(optionalUserModel.isPresent()) {
-            if(passwordEncoder.matches(authDto.getPassword(),
-                    optionalUserModel.get().getPassword())) {
-                return optionalUserModel.get().isVerified();
-            }
-        }
-        return false;
+        return optionalUserModel.filter(userModel -> passwordEncoder.matches(
+                authDto.getPassword(), userModel.getPassword())).isPresent();
     }
 
     public List<UserModel> findAll() {
@@ -49,6 +45,15 @@ public class UserService {
 
     public void deleteById(UUID uuid) {
         userRepository.deleteById(uuid);
+    }
+
+    public boolean isUserVerified(String username) {
+        var optionalUserModel = userRepository.findByUsername(username);
+        return optionalUserModel.map(UserModel::isVerified).orElse(false);
+    }
+
+    public boolean isSameVerificationCode(String rawVerificationCode, String encodedVerificationCode) {
+        return passwordEncoder.matches(rawVerificationCode, encodedVerificationCode);
     }
 
 }
