@@ -19,15 +19,14 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Random;
 import java.util.UUID;
 
-@Log4j2
-@RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@RestController
 public class UserController {
 
-    private final UserService userService;
-    private final MailService mailService;
     private final JwtService jwtService;
+    private final MailService mailService;
+    private final UserService userService;
 
     @PostMapping("/create")
     public ResponseEntity<UserModel> create(@RequestBody @Valid UserDto userDto) throws JsonProcessingException {
@@ -40,8 +39,31 @@ public class UserController {
                 userDto.getEmail(),
                 verificationCode
         ));
-        log.info(verificationCode);
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(userModel));
+    }
+
+    @DeleteMapping("/delete/{uuid}")
+    public ResponseEntity<Object> delete(@PathVariable(value = "uuid") UUID uuid) {
+        var optionalUserModel = userService.findById(uuid);
+        if(optionalUserModel.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No user found :(");
+        }
+        userService.deleteById(uuid);
+        return ResponseEntity.ok("User deleted successfully!");
+    }
+
+    @PutMapping("/edit/{uuid}")
+    public ResponseEntity<Object> edit(@PathVariable(value = "uuid") UUID uuid, @RequestBody @Valid UserDto userDto) {
+        var optionalUserModel = userService.findById(uuid);
+        if(optionalUserModel.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No user found :(");
+        }
+        var userModel = new UserModel();
+        BeanUtils.copyProperties(userDto, userModel);
+        userModel.setUuid(optionalUserModel.get().getUuid());
+        userModel.setVerificationCode(optionalUserModel.get().getVerificationCode());
+        userModel.setVerified(optionalUserModel.get().getVerified());
+        return ResponseEntity.ok(userService.save(userModel));
     }
 
     @GetMapping("/all")
@@ -60,28 +82,13 @@ public class UserController {
                 () -> ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found :("));
     }
 
-    @PutMapping("/edit/{uuid}")
-    public ResponseEntity<Object> edit(@PathVariable(value = "uuid") UUID uuid, @RequestBody @Valid UserDto userDto) {
-        var optionalUserModel = userService.findById(uuid);
-        if(optionalUserModel.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No user found :(");
+    @PostMapping("/login")
+    public ResponseEntity<Object> login(@RequestBody AuthDto authDto) {
+        if(!userService.authenticate(authDto)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+                    "Something gone wrong :/, try again later or check your credentials");
         }
-        var userModel = new UserModel();
-        BeanUtils.copyProperties(userDto, userModel);
-        userModel.setUuid(optionalUserModel.get().getUuid());
-        userModel.setVerificationCode(optionalUserModel.get().getVerificationCode());
-        userModel.setVerified(optionalUserModel.get().getVerified());
-        return ResponseEntity.ok(userService.save(userModel));
-    }
-
-    @DeleteMapping("/delete/{uuid}")
-    public ResponseEntity<Object> delete(@PathVariable(value = "uuid") UUID uuid) {
-        var optionalUserModel = userService.findById(uuid);
-        if(optionalUserModel.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No user found :(");
-        }
-        userService.deleteById(uuid);
-        return ResponseEntity.ok("User deleted successfully!");
+        return ResponseEntity.ok(jwtService.generateToken(authDto.getUsername()));
     }
 
     @PostMapping("/verify/{uuid}")
@@ -101,15 +108,6 @@ public class UserController {
         userModel.setVerified(true);
         userService.saveVerified(userModel);
         return ResponseEntity.ok("Thanks for verifying your account ;)");
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<Object> login(@RequestBody AuthDto authDto) {
-        if(!userService.authenticate(authDto)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
-                    "Something gone wrong :/, try again later or check your credentials");
-        }
-        return ResponseEntity.ok(jwtService.generateToken(authDto.getUsername()));
     }
 
 }

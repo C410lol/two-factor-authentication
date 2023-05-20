@@ -13,12 +13,12 @@ public class MailService {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    public void sendMailVerificationMessage(VerificationMailDto verificationMailDto) throws JsonProcessingException {
-        kafkaTemplate.send("mails", convertMailDtoToString(verificationMailDto));
-    }
-
     private String convertMailDtoToString(VerificationMailDto verificationMailDto) throws JsonProcessingException {
         return new ObjectMapper().writeValueAsString(verificationMailDto);
+    }
+
+    public void sendMailVerificationMessage(VerificationMailDto verificationMailDto) throws JsonProcessingException {
+        kafkaTemplate.send("mails", convertMailDtoToString(verificationMailDto));
     }
 
 }

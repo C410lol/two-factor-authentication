@@ -12,14 +12,14 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserDto {
 
-    @NotBlank
-    private String username;
-
     @Email
     @NotBlank
     private String email;
 
     @NotBlank
     private String password;
+
+    @NotBlank
+    private String username;
 
 }

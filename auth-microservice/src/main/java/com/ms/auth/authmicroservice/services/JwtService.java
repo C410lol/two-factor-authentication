@@ -29,26 +29,6 @@ public class JwtService {
                 .compact();
     }
 
-    public Authentication tryToAuthenticate(String token) {
-        if(isNotExpired(token)) {
-            return new UsernamePasswordAuthenticationToken(
-                    getSubject(token),
-                    null,
-                    null
-            );
-        }
-        return null;
-    }
-
-    public String getSubject(String token) {
-        return getClaim(token, Claims::getSubject);
-    }
-
-    private boolean isNotExpired(String token) {
-        return getClaim(token, Claims::getExpiration).after(
-                new Date(System.currentTimeMillis()));
-    }
-
     private Claims getAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSecretKey())
@@ -62,6 +42,26 @@ public class JwtService {
 
     private @NotNull Key getSecretKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
+    }
+
+    public String getSubject(String token) {
+        return getClaim(token, Claims::getSubject);
+    }
+
+    private boolean isNotExpired(String token) {
+        return getClaim(token, Claims::getExpiration).after(
+                new Date(System.currentTimeMillis()));
+    }
+
+    public Authentication tryToAuthenticate(String token) {
+        if(isNotExpired(token)) {
+            return new UsernamePasswordAuthenticationToken(
+                    getSubject(token),
+                    null,
+                    null
+            );
+        }
+        return null;
     }
 
 }

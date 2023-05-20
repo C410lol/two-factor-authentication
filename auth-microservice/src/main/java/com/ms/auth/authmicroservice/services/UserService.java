@@ -16,23 +16,17 @@ import java.util.UUID;
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
-    public UserModel save(@NotNull UserModel userModel) {
-        userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
-        userModel.setVerificationCode(passwordEncoder.encode(userModel.getVerificationCode()));
-        return userRepository.save(userModel);
-    }
-
-    public void saveVerified(@NotNull UserModel userModel) {
-        userRepository.save(userModel);
-    }
+    private final UserRepository userRepository;
 
     public boolean authenticate(@NotNull AuthDto authDto) {
         var optionalUserModel = userRepository.findByUsername(authDto.getUsername());
         return optionalUserModel.filter(userModel -> passwordEncoder.matches(
                 authDto.getPassword(), userModel.getPassword())).isPresent();
+    }
+
+    public void deleteById(UUID uuid) {
+        userRepository.deleteById(uuid);
     }
 
     public List<UserModel> findAll() {
@@ -43,8 +37,8 @@ public class UserService {
         return userRepository.findById(uuid);
     }
 
-    public void deleteById(UUID uuid) {
-        userRepository.deleteById(uuid);
+    public boolean isSameVerificationCode(String rawVerificationCode, String encodedVerificationCode) {
+        return passwordEncoder.matches(rawVerificationCode, encodedVerificationCode);
     }
 
     public boolean isUserVerified(String username) {
@@ -52,8 +46,14 @@ public class UserService {
         return optionalUserModel.map(UserModel::isVerified).orElse(false);
     }
 
-    public boolean isSameVerificationCode(String rawVerificationCode, String encodedVerificationCode) {
-        return passwordEncoder.matches(rawVerificationCode, encodedVerificationCode);
+    public UserModel save(@NotNull UserModel userModel) {
+        userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
+        userModel.setVerificationCode(passwordEncoder.encode(userModel.getVerificationCode()));
+        return userRepository.save(userModel);
+    }
+
+    public void saveVerified(@NotNull UserModel userModel) {
+        userRepository.save(userModel);
     }
 
 }
