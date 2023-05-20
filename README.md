@@ -20,4 +20,3 @@ LANGUAGES:
 - Json Web Token (JWT)
 - Apache Kafka
 - Git
-- Git Flow
