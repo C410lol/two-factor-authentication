@@ -1,0 +1,11 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    password: banco007
+    url: jdbc:postgresql://localhost:5432/auth-ms-db
+    username: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
